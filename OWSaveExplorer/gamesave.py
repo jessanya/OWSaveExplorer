@@ -6,14 +6,14 @@ from json import loads
 from pprint import PrettyPrinter
 from typing import Optional, Union
 
-from OWSaveEditor.enums import (
+from OWSaveExplorer.enums import (
     DeathTypeEnum,
     FrequencyEnum,
     SignalEnum,
     StartupPopupsFlag,
 )
-from OWSaveEditor.strings import persistent_conditions
-from OWSaveEditor.util import Tristate
+from OWSaveExplorer.strings import persistent_conditions
+from OWSaveExplorer.util import Tristate
 
 logger = logging.getLogger('gamesave')
 

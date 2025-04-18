@@ -2,7 +2,7 @@
 
 import logging
 
-from OWSaveEditor.app import OWSaveEditorApp
+from OWSaveExplorer.app import OWSaveExplorerApp
 
 logging.basicConfig(
     level="DEBUG",
@@ -21,5 +21,5 @@ if __name__ == "__main__":
         "-o", "--outfile", help="File to save edits to. Leave blank to edit in-place"
     )
     args = parser.parse_args()
-    app = OWSaveEditorApp({"file": args.file, "outfile": args.outfile})
+    app = OWSaveExplorerApp({"file": args.file, "outfile": args.outfile})
     app.run()

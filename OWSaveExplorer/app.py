@@ -9,13 +9,12 @@ from textual.events import Blur
 from textual.widgets import Footer, Header, Input, Label
 from textual_fspicker import FileOpen, FileSave
 
-from OWSaveEditor.gamesave import GameSave
-from OWSaveEditor.widgets.gamesave import GameSaveWidget
+from OWSaveExplorer.gamesave import GameSave
+from OWSaveExplorer.widgets.gamesave import GameSaveWidget
 
 logger = logging.getLogger('app')
 
-
-class OWSaveEditorApp(App):
+class OWSaveExplorerApp(App):
     BINDINGS = [
         ('o', 'open', 'Open'),
         ('S', 'save', 'Save'),

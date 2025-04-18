@@ -9,15 +9,15 @@ from textual.events import Click
 from textual.widgets import Input, Tree
 from textual.widgets.tree import TreeNode
 
-from OWSaveEditor.enums import (
+from OWSaveExplorer.enums import (
     DeathTypeEnum,
     FrequencyEnum,
     SignalEnum,
     StartupPopupsFlag,
 )
-from OWSaveEditor.gamesave import GameSave, ShipLogFactSave
-from OWSaveEditor.strings import persistent_conditions, rumors
-from OWSaveEditor.util import Tristate, color_bool, highlighter
+from OWSaveExplorer.gamesave import GameSave, ShipLogFactSave
+from OWSaveExplorer.strings import persistent_conditions, rumors
+from OWSaveExplorer.util import Tristate, color_bool, highlighter
 
 logger = logging.getLogger('gamesave')
 
