@@ -1,97 +1,73 @@
 #!/usr/bin/env python3
 
+import asyncio
 import logging
-from pathlib import Path
 from typing import Optional
 
 from textual.app import App, ComposeResult
-from textual.events import Blur
-from textual.widgets import Footer, Header, Input, Label
-from textual_fspicker import FileOpen, FileSave
+from textual.events import Blur, Key
+from textual.widgets import Footer, Header, Input, Label, Static
 
-from OWSaveExplorer.gamesave import GameSave
-from OWSaveExplorer.widgets.gamesave import GameSaveWidget
+from OWSaveExplorer.widgets.gamesave import GameSaveTree
+from OWSaveExplorer.widgets.optionlist import OptionList
 
 logger = logging.getLogger('app')
 
+
 class OWSaveExplorerApp(App):
-    BINDINGS = [
-        ('o', 'open', 'Open'),
-        ('S', 'save', 'Save'),
-    ]
+    BINDINGS = [('enter', 'submit', 'Submit')]
 
     def __init__(self, config: dict) -> None:
         self.data = {}
         self.config = config
-        self.savefile = config.get('file')
-        self.selected = None
-        self.fact_tree = None
         super().__init__()
 
     def on_mount(self) -> None:
-        self.load_save(self.savefile)
         self.hide_editbox()
+        self.optionlist.container.mount(self.optionlist)
+        if self.config.get('file'):
+           asyncio.create_task(self.query_one('#tree')._open())
 
-    def hide_editbox(self, event: Optional[Blur]=None) -> None:
+    def hide_editbox(self, event: Optional[Blur] = None) -> None:
         widget = self.query_one('#editbox')
         widget.disabled = True
         widget.styles.display = 'none'
 
     def check_action(self, action: str, parameters: tuple[object, ...]) -> bool | None:
-        if self.savefile and action == 'open':
-            return False
-
-        if self.savefile and action == 'save':
-            return True
-
+        if action == 'submit':
+            return self.optionlist.has_focus or self.editbox.has_focus
         return True
 
-    def load_save(self, savefile: str) -> None:
-        self.savefile = savefile
-        if not savefile:
-            return
+    async def action_submit(self) -> None:
         tree = self.query_one('#tree')
-        with Path(savefile).open() as file:
-            self.save = GameSave.from_json(file)
-        tree.set_gamesave(self.save)
-        #  self.load_json(tree.root, self.save.data)
-        tree.root.expand()
-        self.query_one(Label).update(f'Loaded {savefile!r}')
+        tree.action_submit()
 
     def compose(self) -> ComposeResult:
         yield Header()
         yield Label(markup=False)
-        #  yield Tree('Root', id='tree')
-        yield GameSaveWidget(id='tree')
-        this = self
+        yield GameSaveTree(id='tree')
 
-        class MyInput(Input):
+        class EditboxInput(Input):
             def on_blur(self, event: Blur) -> None:
-                this.hide_editbox(event)
+                self.app.hide_editbox(event)
 
-            async def action_submit(self) -> None:
-                tree = this.query_one('#tree')
-                tree.edit(self.value)
+            def check_action(self, action: str, parameters: tuple[object, ...]) -> bool | None:
+                # Use parent submit instead
+                return action != 'submit'
 
-        yield MyInput(id='editbox', select_on_focus=False)
+            async def on_key(self, event: Key) -> None:
+                logger.info('on_key(%r)', event)
+                if event.key == 'escape':
+                    self.blur()
+
+        self.editbox = EditboxInput(id='editbox', select_on_focus=False)
+        yield self.editbox
+
+        self.optionlist = OptionList(Static(id='optionlist'))
+
+        yield self.optionlist.container
         yield Footer()
 
-    def action_open(self) -> None:
-        self.run_worker(self._open())
-
-    async def _open(self) -> None:
-        if opened := await self.push_screen_wait(FileOpen()):
-            self.load_save(str(opened))
-        self.refresh_bindings()
-
-    def action_save(self) -> None:
-        logger.debug('action_save()')
-        self.run_worker(self._save())
-
-    async def _save(self) -> None:
-        logger.debug('_save()')
-        file = self.config.get('outfile', None)
-        if not file:
-            file = await self.push_screen_wait(FileSave())
-        # if file:
-        #     self.save.save(str(file))
+    def action_show_list(self) -> None:
+        self.optionlist.show()
+        self.optionlist.focus()

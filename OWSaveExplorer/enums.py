@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
-from enum import Enum, Flag, auto
+from enum import IntEnum, IntFlag, auto
 
 
-class SignalEnum(Enum):
+class SignalEnum(IntEnum):
     Traveler_Esker = 10
     Traveler_Chert = 11
     Traveler_Riebeck = 12
@@ -37,7 +37,7 @@ class SignalEnum(Enum):
     MapSatellite = 101
 
 
-class FrequencyEnum(Enum):
+class FrequencyEnum(IntEnum):
     _ = 0
     Traveler = 1
     Quantum = 2
@@ -47,7 +47,7 @@ class FrequencyEnum(Enum):
     Radio = 6
 
 
-class DeathTypeEnum(Enum):
+class DeathTypeEnum(IntEnum):
     DEFAULT = 0
     IMPACT = auto()
     ASPHYXIATION = auto()
@@ -65,7 +65,7 @@ class DeathTypeEnum(Enum):
     CRUSHED_BY_ELEVATOR = auto()
 
 
-class StartupPopupsFlag(Flag):
+class StartupPopupsFlag(IntFlag):
     NONE = 0
     RESET_INPUTS = 1
     REDUCED_FRIGHTS = 2

@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 
 import logging
+from collections.abc import Iterator
 from io import TextIOBase
-from json import loads
+from json import dumps, loads
+from pathlib import Path
 from pprint import PrettyPrinter
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 from OWSaveExplorer.enums import (
     DeathTypeEnum,
@@ -12,11 +14,10 @@ from OWSaveExplorer.enums import (
     SignalEnum,
     StartupPopupsFlag,
 )
-from OWSaveExplorer.strings import persistent_conditions
+from OWSaveExplorer.strings import persistent_conditions, rumors
 from OWSaveExplorer.util import Tristate
 
 logger = logging.getLogger('gamesave')
-
 
 class ShipLogFactSave:
     def __init__(
@@ -35,11 +36,28 @@ class ShipLogFactSave:
     def from_dict(cls, data: dict) -> 'ShipLogFactSave':
         return cls(data['id'], data['revealOrder'], data['read'], data['newlyRevealed'])
 
+    def __iter__(self) -> Iterator[tuple[str, Any]]:
+        yield from {
+            'id': self.id,
+            'revealOrder': self.revealOrder,
+            'read': self.read,
+            'newlyRevealed': self.newlyRevealed,
+        }.items()
+
     def __repr__(self) -> str:
         return (
             f'ShipLogFactSave(id={self.id!r}, revealOrder={self.revealOrder}, read={self.read}, '
             f'newlyRevealed={self.newlyRevealed})'
         )
+
+
+# class ShipLogFactSavesNode:
+#     def __init__(self, node):
+#         self.node = node
+
+#     def _next
+
+#     def reveal(name):
 
 
 class GameSave:
@@ -52,8 +70,15 @@ class GameSave:
         self.knownFrequencies[FrequencyEnum._] = True
 
         self.knownSignals: dict[SignalEnum, bool] = {}
+        for signal in list(SignalEnum):
+            self.knownSignals[signal] = False
+
         self.dictConditions: dict[str, Tristate] = {}
+
         self.shipLogFactSaves: dict[str, ShipLogFactSave] = {}
+        for fact in rumors:
+            self.shipLogFactSaves[fact] = ShipLogFactSave(id_=fact)
+
         self.newlyRevealedFactIDs: list[str] = []
         self.lastDeathType: DeathTypeEnum = DeathTypeEnum.DEFAULT
         self.burnedMarshmallowEaten: int = 0
@@ -84,7 +109,7 @@ class GameSave:
             save.knownSignals[SignalEnum(int(k))] = v
 
         for condition in persistent_conditions:
-            save.dictConditions[condition] = Tristate(data['dictConditions'].get(condition, None))
+            save.dictConditions[condition] = Tristate(data['dictConditions'].get(condition))
 
         for k, v in data['shipLogFactSaves'].items():
             save.shipLogFactSaves[k] = ShipLogFactSave.from_dict(v)
@@ -104,6 +129,55 @@ class GameSave:
         save.didRunInitGammaSetting = data['didRunInitGammaSetting']
 
         return save
+
+    def to_json(self) -> str:
+        data = {}
+        data['loopCount'] = self.loopCount
+
+        data['knownFrequencies']: list[bool] = [self.knownFrequencies[FrequencyEnum(n)] for n in range(7)]
+
+        data['knownSignals']: dict[SignalEnum, bool] = {}
+        for signal, v in self.knownSignals.items():
+            data['knownSignals'][str(int(signal))] = v
+
+        data['dictConditions'] = {}
+        for condition, v in self.dictConditions.items():
+            if v is not None and v.value is not None:
+                data['dictConditions'][condition] = v.value
+
+        data['shipLogFactSaves'] = {}
+        for k, v in self.shipLogFactSaves.items():
+            data['shipLogFactSaves'][k] = dict(v)
+
+        data['newlyRevealedFactIDs'] = self.newlyRevealedFactIDs
+        data['lastDeathType'] = int(self.lastDeathType)
+
+        data['burnedMarshmallowEaten'] = self.burnedMarshmallowEaten
+        data['fullTimeloops'] = self.fullTimeloops
+        data['perfectMarshmallowsEaten'] = self.perfectMarshmallowsEaten
+        data['warpedToTheEye'] = self.warpedToTheEye
+        data['secondsRemainingOnWarp'] = self.secondsRemainingOnWarp
+        data['loopCountOnParadox'] = self.loopCountOnParadox
+        data['shownPopups'] = int(self.shownPopups)
+        data['version'] = self.version
+        data['ps5Activity_canResumeExpedition'] = self.ps5Activity_canResumeExpedition
+        data['ps5Activity_availableShipLogCards'] = self.ps5Activity_availableShipLogCards
+        data['didRunInitGammaSetting'] = self.didRunInitGammaSetting
+
+        self.from_json(dumps(data))
+
+        return dumps(data)
+
+    def save(self, file: str | Path | TextIOBase) -> None:
+        if isinstance(file, str):
+            file = Path(file).open('w')  # noqa: SIM115
+        elif isinstance(file, Path):
+            file = file.open('w')
+        elif not isinstance(file, str):
+            raise ValueError('"file" argument must be a str, Path, or TextIOBase')
+
+        json = self.to_json()
+        file.write(json)
 
     def __repr__(self) -> str:
         out = 'GameSave('

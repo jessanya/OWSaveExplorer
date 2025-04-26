@@ -4,12 +4,12 @@ import logging
 
 from OWSaveExplorer.app import OWSaveExplorerApp
 
-logging.basicConfig(
-    level="DEBUG",
-    format="%(asctime)s %(name)-8s %(levelname)-6s %(message)s",
-    filename="out.log",
-    filemode="w",
-)
+#logging.basicConfig(
+#    level="DEBUG",
+#    format="%(asctime)s %(name)-8s %(levelname)-6s %(message)s",
+#    filename="out.log",
+#    filemode="w",
+#)
 logger = logging.getLogger("main")
 
 if __name__ == "__main__":

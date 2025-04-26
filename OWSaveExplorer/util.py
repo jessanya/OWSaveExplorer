@@ -4,6 +4,7 @@ from typing import Optional
 
 from rich.highlighter import ReprHighlighter
 from rich.text import Text
+from textual.validation import Function, ValidationResult
 
 highlighter = ReprHighlighter()
 
@@ -15,34 +16,6 @@ def color_bool(val: bool, /, align_left: int = 0, align_right: int = 0) -> Text:
     if align_right:
         text.align('right', align_right)
     return text
-
-
-# def entry_to_markup(name: str, data: Unknown) -> Text:
-#     if name:
-#         return Text.assemble(Text.from_markup(f'[b]{name}[/b]='), highlighter(repr(data)))
-#     return Text(repr(data))
-
-
-# def cmp(a, b) -> int:
-#     order = [list, tuple, dict]
-
-#     av = order.index(type(a[1])) if type(a[1]) in order else -1
-#     bv = order.index(type(b[1])) if type(b[1]) in order else -1
-
-#     if av == bv:
-#         if False:  # and isinstance(a[1], dict) and 'revealOrder' in a[1]:
-#             av = a[1]['revealOrder']
-#             bv = b[1]['revealOrder']
-#         else:
-#             av = a[0]
-#             bv = b[0]
-#             if av.isdigit() and bv.isdigit():
-#                 av = int(av)
-#                 bv = int(bv)
-
-#     r = -1 if av < bv else (1 if av > bv else 0)
-#     #  open('out.log', 'a+').write(f'{a}|{av} ? {b}|{bv} -> {r}\n')
-#     return r
 
 
 class Tristate:
@@ -67,3 +40,16 @@ class Tristate:
 
     def __repr__(self) -> str:
         return f'Tristate({self.value})'
+
+
+class ValidationWrapper:
+    def __init__(self, validator: Function) -> None:
+        self.validator = validator
+
+    def validate(self, value: object) -> ValidationResult:
+        if self.validator is None:
+            return ValidationResult()
+        try:
+            return self.validator.validate(value)
+        except Exception:
+            return self.validator.failure()
